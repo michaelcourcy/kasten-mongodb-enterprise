@@ -14,6 +14,11 @@ processes.
 
 https://github.com/mongodb/mongodb-enterprise-kubernetes/blob/master/samples/ops-manager/ops-manager-backup.yaml
 
+When Kasten will attempt to backup a mongoDB resource a blueprint will be executed to trigger an on-demand snapshot.
+Ops-manager is configured to send the mongodb snapshots elments to S3.
+
+![Overview](./images/overview.png)
+
 ## Sizing 
 
 This blueprint has been tested on a 5 nodes AKS cluster "Standard_DS3_v2" (4vcpu and 14G memory each).
