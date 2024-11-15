@@ -197,7 +197,7 @@ EOF
 
 the choice `8.0.0-ent` instead of `8.0.0` is necessary to enable backup. 
 
-## Check in opsmanager that you see the cluster 
+## Check in ops-manager UI that you see the cluster 
 
 In the project micproject you should see the my-replica-set deployment 
 ![my-replica-set](./images/my-replica-set.png)
@@ -225,11 +225,6 @@ You need to be a bit patient and soon you'll see your first snapshot
 ![First snapshot](./images/first-snapshot.png)
 Also the snapshot bucket should have backup elements.
 ![Snapshot store](./images/snapshot-store.png)
-
-Create a database 
-![Create a database](./images/create-database.png)
-And create some data 
-![Create some data](./images/create-some-data.png)
 
 
 # Create an on demand backup 
@@ -261,7 +256,7 @@ This image is the one I use in the blueprint, if you build your own do not forge
 
 ## Understand what the blueprint is doing  
 
-For people that are not used to bluerprint it's always good to see how we can do this within a script.
+For people that are not used to blueprint it's always good to see how we can do this within a script.
 The kasten blueprint and blueprint binding will integrate all those operations in a single backup workflow.
 But by reading the script you get an idea of the workflow.  
 
@@ -373,27 +368,39 @@ kubectl create -f mongodb-ent-bp.yaml -n kasten-io
 kubectl create -f mongodb-ent-bp-binding.yaml -n kasten-io 
 ```
 
-If you navigate to the mongodb application in kasten you can see the blueprint is bound to the MongoSB custom resource
+If you navigate to the mongodb application in kasten you can see the blueprint is bound to the MongoDB custom resource
 ![Blueprint Binding](./images/bp-binding.png)
 
 ## Create a Kasten policy for the mongodb namespace  
 
 Create a Kasten policy for the mongodb namespace and execute it
 ![kasten policy](./images/kasten-policy.png)
-Notice that I exclude all the PVCs because in this namespace there is just the PVC of the cluster and we don't backup the datbase by backing up the PVC.
+
+Notice that I exclude all the PVCs because in this namespace there is just the PVC of the mongodb cluster and we don't backup them by backing up the PVC.
 
 ## Check the restore point 
 
 This policy create a restore point where you can view the mongodb snapshot in the kanister card (one card per mongodb resource)
 ![Restore point](./images/restorepoint.png)
 
-Check also in the opsmanage UI that the snapshot has been created.
+Check also in the ops-manager UI that the snapshot has been created.
 ![Mongo snapshot created by kasten](./images/created-by-kasten.png)
 
 ## Delete the restore point 
 
 Delete the restore point 
 ![Delete the restore point](./images/delete-restore-point.png)
+
+## Restore 
+
+The restore action is not implemented in this blueprint, because restore operations often need more granularity and waiting for availability.
+Practically this is not an issue because restoring is alway an exceptional event.
+
+We recommand using the ops-manager UI
+![Restore with ops-manager](./images/restore-in-opsmanager.png)
+
+If you need support to implement restore action in the blueprint please contact your commercial representative.
+
 
 # Link and credits 
 

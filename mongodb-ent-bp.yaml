@@ -7,6 +7,8 @@ actions:
     outputArtifacts:
       mongoSnap:
         keyValue:
+          backupEnabled: '{{ .Phases.snapshotOnDemand.Output.backupEnabled }}'
+          baseUrl: '{{ .Phases.snapshotOnDemand.Output.baseUrl }}'
           projectId: '{{ .Phases.snapshotOnDemand.Output.projectId }}'
           clusterId: '{{ .Phases.snapshotOnDemand.Output.clusterId }}'
           snapshotId: '{{ .Phases.snapshotOnDemand.Output.snapshotId }}'
@@ -56,7 +58,7 @@ actions:
               --request POST $baseUrl/api/public/v1.0/groups/$projectId/clusters/$clusterId/snapshots/onDemandSnapshot?retentionDays=1000|jq -r ".timestamp.time")
 
           echo "we wait for a snapshot to be complete and created after the snapshotRequestTimestamp"          
-          timeout=600 
+          timeout=1800 
           wait=0
           sleepIncrement=3
           timeout=$((timeout+sleepIncrement))
@@ -87,6 +89,47 @@ actions:
               break
             fi
           done
+          kando output backupEnabled $backupEnabled
+          kando output baseUrl $baseUrl
           kando output projectId $projectId
           kando output clusterId $clusterId
           kando output snapshotId $snapshotId
+  delete:
+    inputArtifactNames: 
+    - mongoSnap  
+    phases:         
+    - func: KubeTask
+      name: deleteSnapshot
+      objects:
+        backupAdminSecret:
+          kind: Secret
+          name: 'mongodb-backup-admin'
+          namespace: 'kasten-io'  
+      args:        
+        image: michaelcourcy/kanister-tools:0.112.0
+        command:
+        - bash
+        - +x
+        - -o
+        - errexit
+        - -o
+        - pipefail
+        - -c
+        - |
+          backupEnabled="{{ .ArtifactsIn.mongoSnap.KeyValue.backupEnabled }}"
+          baseUrl="{{ .ArtifactsIn.mongoSnap.KeyValue.baseUrl }}"
+          projectId="{{ .ArtifactsIn.mongoSnap.KeyValue.projectId }}"
+          clusterId="{{ .ArtifactsIn.mongoSnap.KeyValue.clusterId }}"
+          snapshotId="{{ .ArtifactsIn.mongoSnap.KeyValue.snapshotId }}"
+          publicKey="{{ index .Phases.deleteSnapshot.Secrets.backupAdminSecret.Data "user" | toString }}"
+          privateKey="{{ index .Phases.deleteSnapshot.Secrets.backupAdminSecret.Data "publicApiKey" | toString }}"
+          if [[ $backupEnabled == "enabled" ]]
+          then 
+            echo "Backup is enabled for this cluster processing the deletion of the snapshot"
+          else
+            echo "Backup is not enabled for this cluster, nothing to do"
+            exit 0
+          fi
+          curl --user "$publicKey:$privateKey" --digest \
+              --header "Accept: application/json" \
+              --request DELETE $baseUrl/api/public/v1.0/groups/$projectId/clusters/$clusterId/snapshots/$snapshotId
