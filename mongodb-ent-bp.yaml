@@ -36,7 +36,7 @@ actions:
           then 
             echo "Backup is enabled for this cluster processing the backup"
           else
-            echo "Backup is not enabled for this cluster, to not fail the kasten job annotate the mongodb resource with kanister.kasten.io/mongo-backup-enabled=false"
+            echo "Backup is not enabled for this cluster, to not fail the kasten job annotate the mongodb resource with kanister.kasten.io/mongo-backup-disabled=true"
             echo "so that the blueprintdinding won't be applied to this resource"
             exit 1
           fi
